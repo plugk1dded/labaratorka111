@@ -1,7 +1,7 @@
 package com.example.labaratorka111;
 
 public class Task {
-    private int id;
+    private final int id;
     private String title;
     private boolean isCompleted;
 

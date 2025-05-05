@@ -10,9 +10,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
-    private List<Task> taskList;
-    private OnTaskCheckedListener onTaskCheckedListener;
-    private OnTaskDeletedListener onTaskDeletedListener;
+    private final List<Task> taskList;
+    private final OnTaskCheckedListener onTaskCheckedListener;
+    private final OnTaskDeletedListener onTaskDeletedListener;
 
     public interface OnTaskCheckedListener {
         void onTaskChecked(int position, boolean isChecked);
@@ -22,7 +22,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         void onTaskDeleted(int position);
     }
 
-    public TaskAdapter(List<Task> taskList, OnTaskCheckedListener onTaskCheckedListener, OnTaskDeletedListener onTaskDeletedListener) {
+    public TaskAdapter(List<Task> taskList, OnTaskCheckedListener onTaskCheckedListener,
+                       OnTaskDeletedListener onTaskDeletedListener) {
         this.taskList = taskList;
         this.onTaskCheckedListener = onTaskCheckedListener;
         this.onTaskDeletedListener = onTaskDeletedListener;
@@ -39,6 +40,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
     public void onBindViewHolder(@NonNull TaskViewHolder holder, int position) {
         Task task = taskList.get(position);
         holder.textViewTask.setText(task.getTitle());
+
+        // Временно удаляем слушателя, чтобы избежать циклов обновления
+        holder.checkBoxCompleted.setOnCheckedChangeListener(null);
         holder.checkBoxCompleted.setChecked(task.isCompleted());
 
         // Зачёркиваем текст, если задача выполнена
@@ -48,23 +52,26 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
             holder.textViewTask.setPaintFlags(holder.textViewTask.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
         }
 
-        // Обработка отметки выполнения
+        // Переустанавливаем слушателя после установки состояния
+        final int currentPosition = position;
         holder.checkBoxCompleted.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (onTaskCheckedListener != null) {
-                onTaskCheckedListener.onTaskChecked(position, isChecked);
+                onTaskCheckedListener.onTaskChecked(currentPosition, isChecked);
             }
         });
 
         // Обработка удаления
         holder.btnDelete.setOnClickListener(v -> {
             if (onTaskDeletedListener != null) {
-                onTaskDeletedListener.onTaskDeleted(position);
+                onTaskDeletedListener.onTaskDeleted(holder.getAdapterPosition());
             }
         });
     }
 
     @Override
-    public int getItemCount() { return taskList.size(); }
+    public int getItemCount() {
+        return taskList.size();
+    }
 
     public static class TaskViewHolder extends RecyclerView.ViewHolder {
         CheckBox checkBoxCompleted;

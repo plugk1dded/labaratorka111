@@ -10,20 +10,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    private List<Task> tasks = new ArrayList<>();
+    private final List<Task> tasks = new ArrayList<>();
     private TaskAdapter adapter;
     private int nextId = 1; // Для генерации ID задач
+
+    private RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        RecyclerView recyclerView = findViewById(R.id.recyclerView);
+        recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         // Инициализация адаптера
-        adapter = new TaskAdapter(tasks, this::onTaskChecked, this::onTaskDeleted);
+        adapter = new TaskAdapter(
+                tasks,
+                this::onTaskChecked,
+                this::onTaskDeleted
+        );
+
         recyclerView.setAdapter(adapter);
 
         // Добавление новой задачи
@@ -45,7 +52,8 @@ public class MainActivity extends AppCompatActivity {
     // Обработка отметки выполнения
     private void onTaskChecked(int position, boolean isChecked) {
         tasks.get(position).setCompleted(isChecked);
-        adapter.notifyItemChanged(position);
+        // Используем post для отложенного выполнения уведомления об изменении
+        recyclerView.post(() -> adapter.notifyItemChanged(position));
     }
 
     // Обработка удаления задачи
